@@ -1,7 +1,37 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
+from pyexcel_xls import get_data as xls_get
+from pyexcel_xlsx import get_data as xlsx_get
+from django.utils.datastructures import MultiValueDictKeyError
 import openpyxl
+from .models import Client
 
 # Create your views here.
+
+
+def excel(request):
+    if request.method == 'POST':
+        try:
+            excel_file = request.FILES['excel_file']
+            if str(excel_file).split('.')[-1] == "xls":
+                data = xls_get(excel_file, column_limit=5)
+            elif str(excel_file).split('.')[-1] == 'xlsx':
+                data = xlsx_get(excel_file, column_limit=5)
+            else:
+                return HttpResponse("Invalid File")
+
+            details = data["Detalle"]
+            if len(details) > 1:
+                for detail in details:
+                    if len(detail) > 0 and detail[0] != "Sucursal":
+                        Client.objects.create(
+                            sucursal=detail[0], cartera=detail[1], clientes=detail[2], fecha_alta=detail[3], saldo=detail[4])
+            return HttpResponse("Data Readed")
+
+        except MultiValueDictKeyError:
+            return HttpResponse("Invalid File")
+    else:
+        return render(request, 'excelapp/index.html')
 
 
 def index(request):

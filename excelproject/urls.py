@@ -18,6 +18,6 @@ from django.urls import path
 from excelapp import views
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('', views.excel, name='index'),
     path('admin/', admin.site.urls),
 ]
